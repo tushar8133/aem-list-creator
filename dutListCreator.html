@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <script type="text/javascript" src="https://unpkg.com/xlsx@0.12.0/dist/xlsx.full.min.js"></script>
+    <script type="text/javascript">
+
+    var excelFileDataHolder;
+
+    function openFile(event) {
+        var file = event.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            convertExcelToJson(reader.result);
+        };
+        reader.onerror = function(e) {
+            console.log(e);
+        };
+        reader.readAsBinaryString(file);
+    };
+
+    function convertExcelToJson(data) {
+        var workbook = XLSX.read(data, {type:'binary'});
+        workbook.SheetNames.forEach(function(sheetName) {
+            var XL_row_object = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+            excelFileDataHolder = [];
+            var final = XL_row_object.map(curr => {
+                var arr = Object.values(curr).map(val => val.trim());
+                excelFileDataHolder.push([arr[0],arr[1],arr[2],arr[3],arr[4],arr[5]]);
+            });
+        })
+    }
+
+    function getCountryCode(){
+        if(!document.getElementById("countryCode").value){
+            alert("Please enter Country Code");
+            return false;
+        }else{
+            var temp = document.getElementById("countryCode").value;
+            var final = temp.toUpperCase();
+            document.getElementById("countryCode").value = final;
+            return final;
+        }
+    }
+
+    function createList(){
+        var obj = {};
+        for (var i = 0; i < excelFileDataHolder.length; i++) {
+            var key = excelFileDataHolder[i][0];
+            var val = excelFileDataHolder[i][2];
+            obj[key] = val;
+        }
+        var sheet = "";
+        sheet += `<${getCountryCode()}\n\tjcr:primaryType="nt:unstructured"`;
+        Object.keys(obj).forEach( key => {
+            sheet += `\n\t${key}="${obj[key]}"`;
+        })
+        sheet += `/>`;
+        return sheet
+    }
+
+    function createSubTypeList(){
+        var sheet = "";
+        sheet += `<${getCountryCode()} jcr:primaryType="nt:unstructured">`;
+        for (var i = 0; i < excelFileDataHolder.length; i++) {
+            var currRow = excelFileDataHolder[i];
+            var prevRow = (i > 0)? excelFileDataHolder[i - 1] : 0;
+            if(i == 0){
+                sheet += `\n\t<${currRow[0]}\n\t\tjcr:primaryType="nt:unstructured"`;
+            }else if(currRow[0] != prevRow[0]){
+                sheet += `/>\n\t<${currRow[0]}\n\t\tjcr:primaryType="nt:unstructured"`;
+            }
+            sheet += `\n\t\t${currRow[1]}="${currRow[3]}"`;
+        }
+        sheet += `/>\n</${getCountryCode()}>`;
+        return sheet
+    }
+
+    function createDescriptionList(){
+        var sheet = "";
+        sheet += `<${getCountryCode()} jcr:primaryType="nt:unstructured">`;
+        for (var i = 0; i < excelFileDataHolder.length; i++) {
+            var currRow = excelFileDataHolder[i];
+            var prevRow = (i > 0)? excelFileDataHolder[i - 1] : 0;
+            if(i == 0){
+                sheet += `\n\t<${currRow[0]}\n\t\tjcr:primaryType="nt:unstructured"`;
+            }else if(currRow[0] != prevRow[0]){
+                sheet += `/>\n\t<${currRow[0]}\n\t\tjcr:primaryType="nt:unstructured"`;
+            }
+            sheet += `\n\t\t${currRow[1]}="${currRow[4]}"`;
+        }
+        sheet += `/>\n</${getCountryCode()}>`;
+        return sheet
+    }
+
+    function createInstructionList(){
+        var sheet = "";
+        sheet += `<${getCountryCode()} jcr:primaryType="nt:unstructured">`;
+        for (var i = 0; i < excelFileDataHolder.length; i++) {
+            var currRow = excelFileDataHolder[i];
+            var prevRow = (i > 0)? excelFileDataHolder[i - 1] : 0;
+            if(i == 0){
+                sheet += `\n\t<${currRow[0]}\n\t\tjcr:primaryType="nt:unstructured"`;
+            }else if(currRow[0] != prevRow[0]){
+                sheet += `/>\n\t<${currRow[0]}\n\t\tjcr:primaryType="nt:unstructured"`;
+            }
+            sheet += `\n\t\t${currRow[1]}="${currRow[5]}"`;
+        }
+        sheet += `/>\n</${getCountryCode()}>`;
+        return sheet
+    }
+
+    function copyList(fnName){
+        var text = fnName();
+        navigator.clipboard.writeText("");
+        navigator.clipboard.writeText(text);
+        document.getElementById("preBox").innerText = text;
+    }
+
+    </script>
+</head>
+
+<body>
+    <p>Step 1 <input type="text" id="countryCode" value="" placeholder="Please enter Country Code"></p>
+    <p>Step 2 <input type='file' id="selectFile" accept='.xlsx, .xls' onchange='openFile(event)'></p>
+    <p>Step 3 
+       <button onclick="copyList(createList)">Doc List</button>
+       <button onclick="copyList(createSubTypeList)">Doc Sub Type List</button>
+       <button onclick="copyList(createDescriptionList)">Description List</button>
+       <button onclick="copyList(createInstructionList)">Instruction List</button>
+    </p>
+    <hr>
+    <pre id="preBox">
+    Hint - The list will be automatically copied to the clipboard after clicking on List buttons.
+    </pre>
+
+</body>
+
+</html>
